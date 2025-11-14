@@ -33,3 +33,28 @@ curl --silent http://ifconfig.me
 ## Доступные эндпоинты
 
 Список доступных эндпоинтов, swagger http://<ip виртуальной машины>:8080/docs
+
+## Задание 1 
+Открой схемы
+- /arch/sharding.drawio
+- /arch/replication.drawio
+- /arch/caching.drawio
+
+## Задание 2
+
+```shell
+
+docker compose exec -T shadr1 mongosh --port 27018 --quiet <<EOF
+use somedb
+db.helloDoc.countDocuments()
+EOF
+```
+
+
+## Задание 3
+
+## Задание 4
+
+## Задание 5
+
+## Задание 6
