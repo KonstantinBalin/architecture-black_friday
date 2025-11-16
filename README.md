@@ -43,7 +43,9 @@ curl --silent http://ifconfig.me
 ## Задание 2
 
 ### Подключитесь к серверу конфигурации и сделайте инициализацию:
-> docker compose exec -it configSrv mongosh --port 27017
+> docker-compose -f mongo-sharding.yaml up -d
+
+> docker exec -it configSrv mongosh --port 27017
 > rs.initiate(
   {
     _id : "config_server",
@@ -99,6 +101,9 @@ docker exec -it shard2 mongosh --port 27019
 > use somedb;
 > db.helloDoc.countDocuments();
 > exit();
+ 
+### Сделайте проверку приложения
+http://localhost:8080/helloDoc/users
 
 ## Задание 3
 
@@ -112,7 +117,7 @@ docker exec -it shard2 mongosh --port 27019
 ## Пошаговая инициализация
 
 ### Шаг 1: Инициализация Config Server Replica Set
-> docker-compose exec config-srv1 mongosh --port 27017
+> docker exec -it config-srv1 mongosh --port 27017
 > rs.initiate(
    {
         _id: "config_server",
@@ -127,11 +132,11 @@ docker exec -it shard2 mongosh --port 27019
 > exit();
 
 Проверить статус:
-> docker-compose exec config-srv1 mongosh --port 27017 --eval "rs.status()"
+> docker exec -it config-srv1 mongosh --port 27017 --eval "rs.status()"
 
 
 ### Шаг 2: Инициализация Shard 1 Replica Set
-> docker-compose exec shard1-node1 mongosh --port 27018
+> docker exec -it shard1-node1 mongosh --port 27018
 > rs.initiate(
     {
       _id: "shard1",
@@ -145,10 +150,10 @@ docker exec -it shard2 mongosh --port 27019
 > exit();
 
 Проверить статус:
-> docker-compose exec shard1-node1 mongosh --port 27018 --eval "rs.status()"
+> docker exec -it shard1-node1 mongosh --port 27018 --eval "rs.status()"
 
 ### Шаг 3: Инициализация Shard 2 Replica Set
-> docker-compose exec shard2-node1 mongosh --port 27019
+> docker exec -it shard2-node1 mongosh --port 27019
 > rs.initiate(
     {
       _id: "shard2",
@@ -162,20 +167,20 @@ docker exec -it shard2 mongosh --port 27019
 > exit();
 
 Проверить статус:
-docker-compose exec shard2-node1 mongosh --port 27019 --eval "rs.status()"
+> docker exec -it shard2-node1 mongosh --port 27019 --eval "rs.status()"
 
 ### Шаг 4: Добавление шардов в кластер через Mongos
-> docker-compose exec mongos-router mongosh --port 27020
+> docker exec -it mongos-router mongosh --port 27020
 > sh.addShard("shard1/shard1-node1:27018,shard1-node2:27018,shard1-node3:27018")
 > sh.addShard("shard2/shard2-node1:27019,shard2-node2:27019,shard2-node3:27019")
 > exit();
 
 Проверить добавленные шарды:
-> docker-compose exec mongos-router mongosh --port 27020 --eval "sh.status()"
+> docker exec -it mongos-router mongosh --port 27020 --eval "sh.status()"
 
 
 ### Шаг 5: Включение шардирования для базы данных
-> docker-compose exec mongos-router mongosh --port 27020
+> docker exec -it mongos-router mongosh --port 27020
 > sh.enableSharding("somedb")
 > use somedb
 > db.helloDoc.createIndex({ name: "hashed" });
@@ -184,70 +189,204 @@ docker-compose exec shard2-node1 mongosh --port 27019 --eval "rs.status()"
 > db.helloDoc.countDocuments()
 > exit();
 
-## Проверка статуса кластера
-### Общее количество документов в базе
-> docker-compose exec mongos-router mongosh --port 27020
-> use somedb
-> db.helloDoc.countDocuments()
-> exit();
-
 ### Количество документов в каждом шарде
-> docker-compose exec mongos-router mongosh --port 27020
+> docker exec -it mongos-router mongosh --port 27020
 > sh.status()
 > exit();
 
 ### Статус репликации Shard 1
-> docker-compose exec shard1-node1 mongosh --port 27018
+> docker exec -it shard1-node1 mongosh --port 27018
 > rs.status()
 > exit();
 
 ### Статус репликации Shard 2
 
-> docker-compose exec shard2-node1 mongosh --port 27019
+> docker exec -it shard2-node1 mongosh --port 27019
 > rs.status()
 > exit();
 
 ### Проверить все компоненты кластера
-> docker-compose exec mongos-router mongosh --port 27020
+> docker exec -it mongos-router mongosh --port 27020
 > use admin
 > db.adminCommand("listShards")
 > exit();
 
-
-
 ### Сделайте проверку на шардах:
-> docker-compose exec shard1-node1 mongosh --port 27018
+> docker exec -it shard1-node1 mongosh --port 27018
 > use somedb;
 > db.helloDoc.countDocuments();
 > exit();
 
-> docker-compose exec shard1-node2 mongosh --port 27018
+> docker exec -it shard1-node2 mongosh --port 27018
 > use somedb;
 > db.helloDoc.countDocuments();
 > exit();
 
-> docker-compose exec shard1-node3 mongosh --port 27018
+> docker exec -it shard1-node3 mongosh --port 27018
 > use somedb;
 > db.helloDoc.countDocuments();
 > exit();
 
-> docker-compose exec shard2-node1 mongosh --port 27019
+> docker exec -it shard2-node1 mongosh --port 27019
 > use somedb;
 > db.helloDoc.countDocuments();
 > exit();
 
-> docker-compose exec shard2-node2 mongosh --port 27019
+> docker exec -it shard2-node2 mongosh --port 27019
 > use somedb;
 > db.helloDoc.countDocuments();
 > exit();
 
-> docker-compose exec shard2-node3 mongosh --port 27019
+> docker exec -it shard2-node3 mongosh --port 27019
 > use somedb;
 > db.helloDoc.countDocuments();
 > exit();
+
+### Сделайте проверку приложения
+http://localhost:8080/helloDoc/users
 
 ## Задание 4
 
+### 1. Запустить контейнеры
+> docker-compose -f mongo-repl-cache.yaml up -d
+
+Проверить статус контейнеров:
+> docker-compose ps
+
+### 2. Инициализация кластера
+## Пошаговая инициализация
+
+### Шаг 1: Инициализация Config Server Replica Set
+> docker exec -it config-srv1 mongosh --port 27017
+> rs.initiate(
+{
+_id: "config_server",
+configsvr: true,
+members: [
+{ _id: 0, host: "config-srv1:27017"},
+{ _id: 1, host: "config-srv2:27017"},
+{ _id: 2, host: "config-srv3:27017"}
+]
+}
+);
+> exit();
+
+Проверить статус:
+> docker exec -it config-srv1 mongosh --port 27017 --eval "rs.status()"
+
+
+### Шаг 2: Инициализация Shard 1 Replica Set
+> docker exec -it shard1-node1 mongosh --port 27018
+> rs.initiate(
+{
+_id: "shard1",
+members: [
+{ _id: 0, host: "shard1-node1:27018"},
+{ _id: 1, host: "shard1-node2:27018"},
+{ _id: 2, host: "shard1-node3:27018"}
+]
+}
+)
+> exit();
+
+Проверить статус:
+> docker exec -it shard1-node1 mongosh --port 27018 --eval "rs.status()"
+
+### Шаг 3: Инициализация Shard 2 Replica Set
+> docker exec -it shard2-node1 mongosh --port 27019
+> rs.initiate(
+{
+_id: "shard2",
+members: [
+{ _id: 0, host: "shard2-node1:27019" },
+{ _id: 1, host: "shard2-node2:27019" },
+{ _id: 2, host: "shard2-node3:27019" }
+]
+}
+)
+> exit();
+
+Проверить статус:
+> docker exec -it shard2-node1 mongosh --port 27019 --eval "rs.status()"
+
+### Шаг 4: Добавление шардов в кластер через Mongos
+> docker exec -it mongos-router mongosh --port 27020
+> sh.addShard("shard1/shard1-node1:27018,shard1-node2:27018,shard1-node3:27018")
+> sh.addShard("shard2/shard2-node1:27019,shard2-node2:27019,shard2-node3:27019")
+> exit();
+
+Проверить добавленные шарды:
+> docker exec -it mongos-router mongosh --port 27020 --eval "sh.status()"
+
+
+### Шаг 5: Включение шардирования для базы данных
+> docker exec -it mongos-router mongosh --port 27020
+> sh.enableSharding("somedb")
+> use somedb
+> db.helloDoc.createIndex({ name: "hashed" });
+> sh.shardCollection("somedb.helloDoc", { "name" : "hashed" } )
+> for(var i = 0; i < 1000; i++) db.helloDoc.insert({age:i, name:"ly"+i})
+> db.helloDoc.countDocuments()
+> exit();
+
+### Количество документов в каждом шарде
+> docker exec -it mongos-router mongosh --port 27020
+> sh.status()
+> exit();
+
+### Статус репликации Shard 1
+> docker exec -it shard1-node1 mongosh --port 27018
+> rs.status()
+> exit();
+
+### Статус репликации Shard 2
+
+> docker exec -it shard2-node1 mongosh --port 27019
+> rs.status()
+> exit();
+
+### Проверить все компоненты кластера
+> docker exec -it mongos-router mongosh --port 27020
+> use admin
+> db.adminCommand("listShards")
+> exit();
+
+### Сделайте проверку на шардах:
+> docker exec -it shard1-node1 mongosh --port 27018
+> use somedb;
+> db.helloDoc.countDocuments();
+> exit();
+
+> docker exec -it shard1-node2 mongosh --port 27018
+> use somedb;
+> db.helloDoc.countDocuments();
+> exit();
+
+> docker exec -it shard1-node3 mongosh --port 27018
+> use somedb;
+> db.helloDoc.countDocuments();
+> exit();
+
+> docker exec -it shard2-node1 mongosh --port 27019
+> use somedb;
+> db.helloDoc.countDocuments();
+> exit();
+
+> docker exec -it shard2-node2 mongosh --port 27019
+> use somedb;
+> db.helloDoc.countDocuments();
+> exit();
+
+> docker exec -it shard2-node3 mongosh --port 27019
+> use somedb;
+> db.helloDoc.countDocuments();
+> exit();
+
+### Сделайте проверку приложения
+http://localhost:8080/helloDoc/users
+
 ## Задание 5
+Cхема /arch/gateway-discovery.drawio
 
 ## Задание 6
+Cхема /arch/cdn.drawio

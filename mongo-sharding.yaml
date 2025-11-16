@@ -1,6 +1,4 @@
-# Docker Compose для MongoDB Sharded Cluster
-# Архитектура: 2 шарда + Config Server + Mongos
-
+name: mongo-sharding
 version: '3.8'
 
 services:
