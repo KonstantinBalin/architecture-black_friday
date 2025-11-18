@@ -36,7 +36,7 @@ curl --silent http://ifconfig.me
 
 ### Остановка контейнера
 ```shell
-docker compose -f mongo-sharding-repl.yaml down
+docker compose -f mongo-sharding-repl.yaml down --rmi all --volumes --remove-orphans
 ```
 
 ---
@@ -121,7 +121,7 @@ http://localhost:8080/helloDoc/users
 
 ### Остановка контейнера
 ```shell
-docker compose -f mongo-sharding.yaml down
+docker compose -f mongo-sharding.yaml down --rmi all --volumes --remove-orphans
 ```
 ---
 
@@ -222,7 +222,7 @@ http://localhost:8080/helloDoc/users
 
 ### Остановка контейнера
 ```shell
-docker compose -f mongo-sharding-repl.yaml down
+docker compose -f mongo-sharding-repl.yaml down --rmi all --volumes --remove-orphans
 ```
 
 ---
@@ -231,17 +231,6 @@ docker compose -f mongo-sharding-repl.yaml down
 ### Запуск контейнеров
 ```shell
 docker compose -f mongo-repl-cache.yaml up -d
-```
-
-### Настройка redis кластера
-```shell
-docker compose -f mongo-repl-cache.yaml exec -T redis-node-1 sh <<EOF
-echo yes | redis-cli --cluster create redis-node-1:7001 redis-node-2:7002 redis-node-3:7003 redis-node-4:7004 redis-node-5:7005 redis-node-6:7006 --cluster-replicas 1
-EOF
-```
-### Проверка redis кластера
-```shell
-docker compose -f mongo-repl-cache.yaml exec -T redis-node-1 redis-cli -c -p 7001 cluster info
 ```
 
 ### Настройка Config Server Replica Set
@@ -327,7 +316,7 @@ http://localhost:8080/helloDoc/users
 
 ### Остановка контейнеров
 ```shell
-docker compose -f mongo-repl-cache.yaml down
+docker compose -f mongo-repl-cache.yaml down --rmi all --volumes --remove-orphans
 ```
 
 ---
