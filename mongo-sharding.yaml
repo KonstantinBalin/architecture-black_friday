@@ -22,7 +22,7 @@ services:
         "27017"
       ]
     healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
       start_period: 10s
 
@@ -46,7 +46,7 @@ services:
         "27018"
       ]
     healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
       start_period: 10s
 
@@ -70,13 +70,13 @@ services:
         "27019"
       ]
     healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
       start_period: 10s
 
-  mongos_router:
+  router:
     image: dh-mirror.gitverse.ru/mongo:latest
-    container_name: mongos_router
+    container_name: router
     restart: always
     ports:
       - "27020:27020"
@@ -91,15 +91,8 @@ services:
         "--port",
         "27020"
       ]
-    depends_on:
-      configSrv:
-        condition: service_healthy
-      shard1:
-        condition: service_healthy
-      shard2:
-        condition: service_healthy
     healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
       interval: 5s
       start_period: 10s
 
@@ -108,15 +101,12 @@ services:
     build:
       context: api_app
       dockerfile: Dockerfile
-    depends_on:
-      mongos_router:
-        condition: service_healthy
     ports:
       - "8080:8080"
     networks:
       - app-network
     environment:
-      MONGODB_URL: "mongodb://mongos_router:27020"
+      MONGODB_URL: "mongodb://router:27020"
       MONGODB_DATABASE_NAME: "somedb"
     restart: always
 
