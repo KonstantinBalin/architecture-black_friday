@@ -1,5 +1,4 @@
 name: mongo-sharding-repl
-version: '3.8'
 
 services:
   config-srv1:
@@ -218,9 +217,9 @@ services:
       interval: 5s
       start_period: 10s
 
-  mongos-router:
+  router:
     image: dh-mirror.gitverse.ru/mongo:latest
-    container_name: mongos-router
+    container_name: router
     restart: always
     ports:
       - "27026:27020"
@@ -236,24 +235,15 @@ services:
         "27020"
       ]
     depends_on:
-      config-srv1:
-        condition: service_healthy
-      config-srv2:
-        condition: service_healthy
-      config-srv3:
-        condition: service_healthy
-      shard1-node1:
-        condition: service_healthy
-      shard1-node2:
-        condition: service_healthy
-      shard1-node3:
-        condition: service_healthy
-      shard2-node1:
-        condition: service_healthy
-      shard2-node2:
-        condition: service_healthy
-      shard2-node3:
-        condition: service_healthy
+      - config-srv1
+      - config-srv2
+      - config-srv3
+      - shard1-node1
+      - shard1-node2
+      - shard1-node3
+      - shard2-node1
+      - shard2-node2
+      - shard2-node3
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 5s
@@ -265,14 +255,13 @@ services:
       context: api_app
       dockerfile: Dockerfile
     depends_on:
-      mongos-router:
-        condition: service_healthy
+      - router
     ports:
       - "8080:8080"
     networks:
       - app-network
     environment:
-      MONGODB_URL: "mongodb://mongos-router:27020"
+      MONGODB_URL: "mongodb://router:27020"
       MONGODB_DATABASE_NAME: "somedb"
     restart: always
 

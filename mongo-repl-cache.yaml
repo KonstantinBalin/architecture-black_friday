@@ -1,5 +1,4 @@
 name: sharding-repl-cache
-version: '3.8'
 
 services:
   config-srv1:
@@ -218,9 +217,9 @@ services:
       interval: 5s
       start_period: 10s
 
-  mongos-router:
+  router:
     image: dh-mirror.gitverse.ru/mongo:latest
-    container_name: mongos-router
+    container_name: router
     restart: always
     ports:
       - "27026:27020"
@@ -236,116 +235,123 @@ services:
         "27020"
       ]
     depends_on:
-      config-srv1:
-        condition: service_healthy
-      config-srv2:
-        condition: service_healthy
-      config-srv3:
-        condition: service_healthy
-      shard1-node1:
-        condition: service_healthy
-      shard1-node2:
-        condition: service_healthy
-      shard1-node3:
-        condition: service_healthy
-      shard2-node1:
-        condition: service_healthy
-      shard2-node2:
-        condition: service_healthy
-      shard2-node3:
-        condition: service_healthy
+      - config-srv1
+      - config-srv2
+      - config-srv3
+      - shard1-node1
+      - shard1-node2
+      - shard1-node3
+      - shard2-node1
+      - shard2-node2
+      - shard2-node3
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 5s
       start_period: 10s
-  redis_1:
-    image: "redis:latest"
-    container_name: redis_1
+  redis-node-1:
+    image: redis:7.0
     ports:
-      - "6379"
-    volumes:
-      - redis_1_data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+      - 7001:7001
+      - 17001:17001
     networks:
       - app-network
+    command:
+      - redis-server
+      - --port 7001
+      - --cluster-enabled yes
+      - --cluster-config-file nodes.conf
+      - --cluster-node-timeout 5000
+      - --appendonly yes
 
-  redis_2:
-    image: "redis:latest"
-    container_name: redis_2
+  redis-node-2:
+    image: redis:7.0
     ports:
-      - "6379"
-    volumes:
-      - redis_2_data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+      - 7002:7002
+      - 17002:17002
     networks:
       - app-network
+    command:
+      - redis-server
+      - --port 7002
+      - --cluster-enabled yes
+      - --cluster-config-file nodes.conf
+      - --cluster-node-timeout 5000
+      - --appendonly yes
 
-  redis_3:
-    image: "redis:latest"
-    container_name: redis_3
+  redis-node-3:
+    image: redis:7.0
     ports:
-      - "6379"
-    volumes:
-      - redis_3_data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+      - 7003:7003
+      - 17003:17003
     networks:
       - app-network
+    command:
+      - redis-server
+      - --port 7003
+      - --cluster-enabled yes
+      - --cluster-config-file nodes.conf
+      - --cluster-node-timeout 5000
+      - --appendonly yes
 
-  redis_4:
-    image: "redis:latest"
-    container_name: redis_4
+  redis-node-4:
+    image: redis:7.0
     ports:
-      - "6379"
-    volumes:
-      - redis_4_data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+      - 7004:7004
+      - 17004:17004
     networks:
       - app-network
+    command:
+      - redis-server
+      - --port 7004
+      - --cluster-enabled yes
+      - --cluster-config-file nodes.conf
+      - --cluster-node-timeout 5000
+      - --appendonly yes
 
-  redis_5:
-    image: "redis:latest"
-    container_name: redis_5
+  redis-node-5:
+    image: redis:7.0
     ports:
-      - "6379"
-    volumes:
-      - redis_5_data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+      - 7005:7005
+      - 17005:17005
     networks:
       - app-network
+    command:
+      - redis-server
+      - --port 7005
+      - --cluster-enabled yes
+      - --cluster-config-file nodes.conf
+      - --cluster-node-timeout 5000
+      - --appendonly yes
 
-  redis_6:
-    image: "redis:latest"
-    container_name: redis_6
+  redis-node-6:
+    image: redis:7.0
     ports:
-      - "6379"
-    volumes:
-      - redis_6_data:/data
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
-    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+      - 7006:7006
+      - 17006:17006
     networks:
       - app-network
-
+    command:
+      - redis-server
+      - --port 7006
+      - --cluster-enabled yes
+      - --cluster-config-file nodes.conf
+      - --cluster-node-timeout 5000
+      - --appendonly yes
   pymongo_api:
     container_name: pymongo_api
     build:
       context: api_app
       dockerfile: Dockerfile
     depends_on:
-      mongos-router:
-        condition: service_healthy
+      - router
     ports:
       - "8080:8080"
     networks:
       - app-network
     environment:
-      MONGODB_URL: "mongodb://mongos-router:27020"
+      MONGODB_URL: "mongodb://router:27020"
       MONGODB_DATABASE_NAME: "somedb"
-      REDIS_URL: "redis://redis_1:6379"
+      REDIS_URL: "redis://redis-node-1:7001"
     restart: always
 
 networks:
